@@ -1,0 +1,4 @@
+S -> ABXBA|$
+X -> c|$
+A -> aX
+B -> bX

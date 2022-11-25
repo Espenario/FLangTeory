@@ -1,0 +1,16 @@
+Grammar:
+
+[S] -> a[S]b[S]
+[S] -> b[S]a[S]
+[S] -> 
+
+Homomorphism:
+
+h()b)) = c
+h((a() = a
+h()a)) = b
+h((b() = d
+
+Regex:
+
+(a(((a(|)a))*)a)
