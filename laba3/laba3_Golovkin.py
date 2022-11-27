@@ -506,8 +506,29 @@ def grammar_to_lines(gram):
         cfg_in_lines.append(line)
     return cfg_in_lines
 
+def find_rule_in_cfg(value, gram):
+    for elem in gram:
+        if value == elem.value:
+            return elem
+
+def create_tree(elem,gram):
+    lis2 = [i for i, letter in enumerate(elem.rules[0]) if letter == '[']
+    if elem.rules[0].find('[') == -1:
+        return RegNode(value=elem.value)  
+    children1 = elem.rules[0][:elem.rules[0].find(']')+1] 
+    children2 = elem.rules[0][lis2[1]:]
+    print(children1)
+    print(children2)
+    children1 = find_rule_in_cfg(children1, gram)
+    children2 = find_rule_in_cfg(children2, gram) 
+    children1 = create_tree(children1, gram)   
+    children2 = create_tree(children2, gram) 
+    return RegNode(children=(children1, children2), value=elem.value)   
+
 def check_language_empty(gram):
-    
+    start_elem = gram[8]         # костыль !!!!
+    gram_root = create_tree(start_elem,gram)
+    print(gram_root.value)
     pass
 
 
@@ -515,7 +536,7 @@ def check_language_empty(gram):
 
 def main():
     # 1 Task ---------------#
-    p = Parser('test4.txt')
+    p = Parser('laba3/test4.txt')
     regex, cfg = p.parse()
     regex1 = copy.deepcopy(regex)
     #p.display_regex_structure(regex)
@@ -543,7 +564,7 @@ def main():
     for elem in first_gram_in_cnf:
         print(elem.value, elem.rules)
     print('________________')
-    check_language_empty(gram_first)
+    #check_language_empty(first_gram_in_cnf)
 
     # 2 Task ---------------#
 
