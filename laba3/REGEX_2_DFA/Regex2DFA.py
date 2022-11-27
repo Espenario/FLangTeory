@@ -161,7 +161,9 @@ def regex2DFA(path):
     post = create_postfix_token_queue(tokens)
     # 4. Creating the tree
     t = Tree(post)
+    #print(t)
     # 5. Creating the DFA
+    #print(ALPH, '_______________________')
     d = DFA(ALPH, t)
     # 6. Printing the results
     #print(INPUT)

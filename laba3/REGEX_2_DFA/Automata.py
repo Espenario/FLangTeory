@@ -1,3 +1,4 @@
+
 class State:
     '''
     Class for states that comprise the DFA

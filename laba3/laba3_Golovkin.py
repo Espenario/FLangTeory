@@ -286,10 +286,14 @@ def delete_useless_rules():
             for i in elem.rule:
                 rules.append(i)
             new_gram.append(HomRule(elem.rule,elem.value))
+    #print('ffffff-------------------')
+    #for elem in new_gram:
+        #print(elem.value, elem.rule)
+    #print('ffffff-------------------')
     #print(rules)
-    for elem in new_gram:
-        if elem.value not in rules:
-            new_gram.remove(elem)
+    #for elem in new_gram:
+    #    if elem.value not in rules:
+    #        new_gram.remove(elem)
     return new_gram
 
 new_grammar = []
@@ -367,14 +371,16 @@ def perform_intersection_for_simple_automaton(dfa, cfg):
                 check_states(elem.value, rule, len(dfa.states))
             else:
                 double_rule_gram.append(HomRule( rule, elem.value))
-    #for elem in double_rule_gram:
+    #print('Before____Delete')
+    #for elem in new_grammar:
         #print(elem.value, elem.rule)
+    #print('---------------')
     new_grammar = delete_useless_rules()
     #for elem in new_grammar:
         #print(elem.value, elem.rule)
     final_gram = final_delete(double_rule_gram, new_grammar,len(dfa.states))
-    for elem in final_gram:
-        print(elem.value, elem.rule)
+    #for elem in final_gram:
+        #print(elem.value, elem.rule)
 
 def create_PSP_file(p):
     psp_gram = []
@@ -389,8 +395,94 @@ def create_PSP_file(p):
     with open('laba3/cfg.txt', 'w') as outfile:
         outfile.write('[S] -> ' + '|'.join(psp_gram) + '|[S][S]')
 
-def produce_first_100_left_output(cfg):
-    pass
+def get_start_symbol(cfg, n):
+    if n == 0:
+        return cfg[0].value
+    for elem in cfg:
+        if elem.value == f"[1S0{n}]":
+            return elem.value
+
+def produce_first_100_left_output(cfg,n):
+    cfg_start_symbol = get_start_symbol(cfg,n)
+    #print(cfg_start_symbol)
+    gen_d = {}
+    words = []
+    for production in cfg:
+            if production.value not in gen_d:
+                gen_d[production.value] = [[]]
+            if production.rules[0].find('[') != -1:    # len(production.body) == 2:
+                lis2 = [i for i, letter in enumerate(production.rules[0]) if letter == '[']
+                obj1 = str(production.rules[0][:production.rules[0].find(']')+1])     
+                obj2 = str(production.rules[0][lis2[1]:])                                      #for obj in production.body:
+                if obj1 not in gen_d:
+                    gen_d[obj1] = [[]]
+                if obj2 not in gen_d:
+                    gen_d[obj2] = [[]]
+        # To a single terminal
+    for production in cfg:
+        body = production.rules[0]
+        if production.rules[0].find('[') == -1:
+            if len(gen_d[production.value]) == 1:
+                gen_d[production.value].append([])
+            if body not in gen_d[production.value][-1]:
+                gen_d[production.value][-1].append(body)
+                words.append(body)
+                #if production.value == cfg_start_symbol:
+                    #return words
+                   #print(body)
+                    #yield body
+    # Complete what is missing
+    #print("------------")
+   # print(gen_d)
+    #print("------------")
+    current_length = 2
+    count = 0
+    total_no_modification = 0
+    while current_length <= 100:
+        was_modified = False
+        for gen in gen_d.values():
+            if len(gen) != current_length:
+                gen.append([])
+        for production in cfg:
+            body = production.rules
+            if len(gen_d[production.value]) != current_length + 1:
+                gen_d[production.value].append([""])
+            if production.rules[0].find('[') == -1:
+                continue
+           # print(production.value, '_+_+_+_+_+_')
+            for i in range(1, current_length):
+                j = current_length - i
+                lis2 = [i for i, letter in enumerate(production.rules[0]) if letter == '[']
+                #print(gen_d[str(production.rules[0][:production.rules[0].find(']')+1])][i], "-=-=-=-=-=-=-=")
+                #print(gen_d[str(production.rules[0][lis2[1]:])][j], '_+_+==-=_+_-==--')
+                for left in gen_d[str(production.rules[0][:production.rules[0].find(']')+1])][i]:
+                    for right in gen_d[str(production.rules[0][lis2[1]:])][j]:
+                        new_word = left + right
+                        #print(new_word, "=================")
+                        if new_word not in gen_d[production.value][-1]:
+                            #print(new_word, "=================")
+                            if new_word not in words:
+                                words.append(new_word)
+                                count += 1
+                            if count == 200:
+                                #print('here')
+                                return words
+                            was_modified = True
+                            gen_d[production.value][-1].append(new_word)
+                            #words.append(new_word)
+                            if production.value == cfg_start_symbol:
+                                #print(new_word)
+                                words.append(new_word)
+                                #return words
+                                #yield new_word
+        if was_modified:
+            total_no_modification = 0
+        else:
+            total_no_modification += 1
+        current_length += 1
+        if total_no_modification > current_length / 2:
+            return words
+    return words
 
 def apply_homomorhism_to_gram(gram,p):
     cfg_in_lines = []
@@ -402,6 +494,21 @@ def apply_homomorhism_to_gram(gram,p):
             line = f"[{gram[i].value[0]}{gram[i].value[1][1:-1]}{gram[i].value[2]}] -> [{gram[i].rule[0][0]}{gram[i].rule[0][1][1:-1]}{gram[i].rule[0][2]}][{gram[i].rule[1][0]}{gram[i].rule[1][1][1:-1]}{gram[i].rule[1][2]}]"
         cfg_in_lines.append(line)
     return cfg_in_lines
+
+def grammar_to_lines(gram):
+    cfg_in_lines = []
+    for i in range(len(gram)):
+        line = ""
+        if type(gram[i].rule) != list:
+            line = f"[{gram[i].value[0]}{gram[i].value[1][1:-1]}{gram[i].value[2]}] -> {gram[i].rule}"
+        else:
+            line = f"[{gram[i].value[0]}{gram[i].value[1][1:-1]}{gram[i].value[2]}] -> [{gram[i].rule[0][0]}{gram[i].rule[0][1][1:-1]}{gram[i].rule[0][2]}][{gram[i].rule[1][0]}{gram[i].rule[1][1][1:-1]}{gram[i].rule[1][2]}]"
+        cfg_in_lines.append(line)
+    return cfg_in_lines
+
+def check_language_empty(gram):
+    
+    pass
 
 
     
@@ -417,6 +524,8 @@ def main():
     create_regex_file(regex, p,1)
     create_cfg_file(cfg)
     complement = Regex2DFA.regex2DFA('laba3/begin_regex.txt')
+    for i in range(len(complement.states)):
+        complement.states[i].final = not(complement.states[i].final)
     #greibach_normalized_cfg, ordered_nonterminals = cfg_main.main()
     #create_gnf_file(greibach_normalized_cfg,p)
     #print(','.join(p.hom_rule_list.values()),greibach_normalized_cfg.start.symbol)
@@ -426,6 +535,15 @@ def main():
     #print(gram_in_cnf)
     #print(p.hom_rule_list)
     perform_intersection_for_simple_automaton(complement, gram_in_cnf)
+    gram_first = new_grammar
+    gram_first = grammar_to_lines(gram_first)
+    create_cfg_file(gram_first)
+    #print('____PSP____')
+    first_gram_in_cnf = cnf.main()
+    for elem in first_gram_in_cnf:
+        print(elem.value, elem.rules)
+    print('________________')
+    check_language_empty(gram_first)
 
     # 2 Task ---------------#
 
@@ -440,22 +558,47 @@ def main():
     #print(cfg_inter.is_empty())  # False
     #print(cfg_inter.is_finite())  # True
 
+    #new_grammar = []
+
     create_regex_file(regex1, p,0)
+
     #print(regex1.get_value())
     complement = Regex2DFA.regex2DFA('laba3/begin_regex.txt')
     create_PSP_file(p)
     psp_in_cnf = cnf.main()
+    # Это один большой костыль, но алгоритм для автомата не мой, и он косячит, почему-то...
     print(complement)
-    #print(gram_in_cnf)
+    for state in complement.states:
+        state.transitions[complement.alphabet[0]],state.transitions[complement.alphabet[1]] = state.transitions[complement.alphabet[1]],state.transitions[complement.alphabet[0]]
+    print(complement)
+    # Это один большой костыль, но алгоритм для автомата не мой, и он косячит, почему-то...
+    #print('____PSP____')
+    #for elem in psp_in_cnf:
+       # print(elem.value, elem.rules)
+    #print('________________')
     perform_intersection_for_simple_automaton(complement, psp_in_cnf) 
-    cfg = apply_homomorhism_to_gram(new_grammar,p)
-    #print(cfg)
+    cfg1 = apply_homomorhism_to_gram(new_grammar,p)
+    #print(cfg1)
+    create_cfg_file(cfg1)
+    gram_in_cnf_after = cnf.main()
     create_cfg_file(cfg)
-    gram_in_cnf = cnf.main()
+    gram_in_cnf_before = cnf.main()
+    #print('____FINAL FINAL____')
+    #for elem in gram_in_cnf_before:
+        #print(elem.value, elem.rules)
+    #print('________________')
 
-    print('____FINAL FINAL____')
-    for elem in gram_in_cnf:
-        print(elem.value, elem.rules)
-    print('________________')
+    words_after = sorted(list(set(produce_first_100_left_output(gram_in_cnf_after,len(complement.states) - 1))))
+    words_before = sorted(list(set(produce_first_100_left_output(gram_in_cnf_before,0))))
+    #print(sorted(words_after, key = len))
+   # print(sorted(words_before, key = len))
+    words_after = sorted(words_before, key = len)[:100]
+    words_before = sorted(words_after, key = len)[:100]
+    res = list(set(words_before) & set(words_after))
+    if len(res) == 100:
+        print("Неточностей не найдено")
+    else:
+        error_elem = list(set(words_before) - set(words_after))[0]
+        print("Контрпример", error_elem)
 
 main()
