@@ -520,8 +520,8 @@ def create_tree(elem,gram,dict):
         return True 
     children1 = elem.rules[0][:elem.rules[0].find(']')+1] 
     children2 = elem.rules[0][lis2[1]:]
-    print(children1)
-    print(children2)
+   # print(children1)
+   # print(children2)
     children1 = find_rule_in_cfg(children1, gram)
     children2 = find_rule_in_cfg(children2, gram) 
     dict[elem] = False
@@ -535,11 +535,11 @@ def check_language_empty(gram,s,f):
     for elem in gram:
         if elem.value == f"[{s}S0{f}]":
             start_elem = elem
-    print(f"[{s}S0{f}]")
+    #print(f"[{s}S0{f}]")
     dict = {}
     flag = create_tree(start_elem,gram,dict)
-    print(flag)
-    pass
+    #print(flag)
+    return flag
 
 
     
@@ -571,9 +571,9 @@ def main():
     create_cfg_file(gram_first)
     #print('____PSP____')
     first_gram_in_cnf = cnf.main()
-    for elem in first_gram_in_cnf:
-        print(elem.value, elem.rules)
-    print('________________')
+    #for elem in first_gram_in_cnf:
+        #print(elem.value, elem.rules)
+    #print('________________')
     f = 0
     s = 0
     for state in complement.states:
@@ -582,7 +582,11 @@ def main():
         elif state.id != len(complement.states):
             s = state.id
     
-    check_language_empty(first_gram_in_cnf,s,f)
+    if check_language_empty(first_gram_in_cnf,s,f):
+        examples = sorted(list(set(produce_first_100_left_output(first_gram_in_cnf,0))))
+        print('Язык не пуст. Пример слова w =', examples[0])
+    else:
+        print('Все ок, язык пуст')
 
     # 2 Task ---------------#
 
