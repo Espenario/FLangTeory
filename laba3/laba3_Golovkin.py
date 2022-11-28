@@ -511,24 +511,34 @@ def find_rule_in_cfg(value, gram):
         if value == elem.value:
             return elem
 
-def create_tree(elem,gram):
+def create_tree(elem,gram,dict):
+    if elem in dict:
+        return dict[elem]
     lis2 = [i for i, letter in enumerate(elem.rules[0]) if letter == '[']
     if elem.rules[0].find('[') == -1:
-        return RegNode(value=elem.value)  
+        dict[elem] = True
+        return True 
     children1 = elem.rules[0][:elem.rules[0].find(']')+1] 
     children2 = elem.rules[0][lis2[1]:]
     print(children1)
     print(children2)
     children1 = find_rule_in_cfg(children1, gram)
     children2 = find_rule_in_cfg(children2, gram) 
-    children1 = create_tree(children1, gram)   
-    children2 = create_tree(children2, gram) 
-    return RegNode(children=(children1, children2), value=elem.value)   
+    dict[elem] = False
+    children1 = create_tree(children1, gram,dict)   
+    children2 = create_tree(children2, gram,dict) 
+    dict[elem] = children1 | children2
+    return children1 | children2 
 
-def check_language_empty(gram):
-    start_elem = gram[8]         # костыль !!!!
-    gram_root = create_tree(start_elem,gram)
-    print(gram_root.value)
+def check_language_empty(gram,s,f):
+    start_elem = None
+    for elem in gram:
+        if elem.value == f"[{s}S0{f}]":
+            start_elem = elem
+    print(f"[{s}S0{f}]")
+    dict = {}
+    flag = create_tree(start_elem,gram,dict)
+    print(flag)
     pass
 
 
@@ -564,22 +574,17 @@ def main():
     for elem in first_gram_in_cnf:
         print(elem.value, elem.rules)
     print('________________')
-    #check_language_empty(first_gram_in_cnf)
+    f = 0
+    s = 0
+    for state in complement.states:
+        if state.final:
+            f = state.id
+        elif state.id != len(complement.states):
+            s = state.id
+    
+    check_language_empty(first_gram_in_cnf,s,f)
 
     # 2 Task ---------------#
-
-    #cfg = CFG.from_text("""
-    #"Var:[S0]" -> $ | "Ter:a" "Var:[S1]" | "Ter:d" "Var:[S2]" | "Var:[S]" "Var:[S]"
-    #"Var:[S]" -> "Ter:a" "Var:[S1]" | "Ter:d" "Var:[S2]" | "Var:[S]" "Var:[S]"
-    #"Var:[S1]" -> "Var:[S]" "Ter:b"
-    #"Var:[S2]" -> "Var:[S]" "Ter:c"
-    #""")
-    #regexx = Regex("a (a | b)* b | d (d | c)* c")
-    #cfg_inter = cfg.intersection(regexx)
-    #print(cfg_inter.is_empty())  # False
-    #print(cfg_inter.is_finite())  # True
-
-    #new_grammar = []
 
     create_regex_file(regex1, p,0)
 
@@ -588,9 +593,9 @@ def main():
     create_PSP_file(p)
     psp_in_cnf = cnf.main()
     # Это один большой костыль, но алгоритм для автомата не мой, и он косячит, почему-то...
-    print(complement)
-    for state in complement.states:
-        state.transitions[complement.alphabet[0]],state.transitions[complement.alphabet[1]] = state.transitions[complement.alphabet[1]],state.transitions[complement.alphabet[0]]
+    #print(complement)
+    #for state in complement.states:
+        #state.transitions[complement.alphabet[0]],state.transitions[complement.alphabet[1]] = state.transitions[complement.alphabet[1]],state.transitions[complement.alphabet[0]]
     print(complement)
     # Это один большой костыль, но алгоритм для автомата не мой, и он косячит, почему-то...
     #print('____PSP____')
@@ -608,8 +613,12 @@ def main():
     #for elem in gram_in_cnf_before:
         #print(elem.value, elem.rules)
     #print('________________')
+    n = 0
+    for state in complement.states:
+        if state.final:
+            n = state.id
 
-    words_after = sorted(list(set(produce_first_100_left_output(gram_in_cnf_after,len(complement.states) - 1))))
+    words_after = sorted(list(set(produce_first_100_left_output(gram_in_cnf_after,n))))
     words_before = sorted(list(set(produce_first_100_left_output(gram_in_cnf_before,0))))
     #print(sorted(words_after, key = len))
    # print(sorted(words_before, key = len))
