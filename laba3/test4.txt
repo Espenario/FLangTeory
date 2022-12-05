@@ -6,11 +6,11 @@ Grammar:
 
 Homomorphism:
 
-h((b() = c
-h((a() = a
-h()a)) = b
-h()b)) = d
+h((a()=a
+h()a))=b
+h((b()=b
+h()b))=a
 
 Regex:
 
-(a(((a(|)a))*)a)(b(
+((a(((a(|)a))*)a)|(b(((b(|)b))*)b))*

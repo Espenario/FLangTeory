@@ -18,7 +18,7 @@ def create_token_queue(INPUT, flag):
     if flag == 0:
         if INPUT[0] == '(' and INPUT[1] == '(':
             tokens.append(INPUT[0])
-        if INPUT[0] == '(':
+        elif INPUT[0] == '(':
             id += INPUT[0]
         for i in range(1,len(INPUT) - 1):
             if INPUT[i] in ['(', ')', '.', '*', '+','|'] and INPUT[i-1] in ['(', ')', '.', '*', '+','|'] and INPUT[i+1] in ['(', ')', '.', '*', '+','|']:          # 

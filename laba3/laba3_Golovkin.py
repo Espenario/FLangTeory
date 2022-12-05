@@ -112,12 +112,12 @@ class Parser():
 
     def parse_hom_rule(self, f):
         hom_rule_list = {}
-        parts = f.readline().rstrip().split(' = ')
+        parts = f.readline().rstrip().split('=')
         while parts[0]:
-            value = parts[1]
-            rule = parts[0][2:-1]
+            value = parts[1].replace(' ', '')
+            rule = parts[0].replace(' ', '')[2:-1]
             hom_rule_list[rule] = value
-            parts = f.readline().rstrip().split(' = ')
+            parts = f.readline().rstrip().split('=')
             #print(parts, rule, value)
         return hom_rule_list
 
@@ -137,7 +137,7 @@ class Parser():
         begin_index = 0
         children = []
         end = len(regex) - 1
-        for i in range(len(regex)):
+        for i in range(len(regex)-1):
             if ((i == 0 and not(regex[i+1].isalpha()) and regex[i] == '(')
                 or (i != 0 and i != end and regex[i] == '(' and not(regex[i-1].isalpha()) and not(regex[i+1].isalpha()))
                 or (i == end and not(regex[i-1].isalpha()) and regex[i] == '(')):
@@ -160,10 +160,31 @@ class Parser():
         
     def parse_concat(self, regex):
         if regex[-1] == '*':
-            regex = regex[1:-2]
-            children = []
-            children.append(self.parse_regex(regex))
-            return RegNode(children, 'Una')
+            open_par = 0
+            close_par = 0
+            eq_ind = 0
+            end = len(regex) - 1
+            for i in range(len(regex)-1):
+                if ((i == 0 and not(regex[i+1].isalpha()) and regex[i] == '(')
+                    or (i != 0 and i != end and regex[i] == '(' and not(regex[i-1].isalpha()) and not(regex[i+1].isalpha()))
+                    or (i == end and not(regex[i-1].isalpha()) and regex[i] == '(')):
+                    open_par += 1
+                if ((i == 0 and not(regex[i+1].isalpha()) and regex[i] == ')')
+                    or (i != 0 and i != end and regex[i] == ')' and not(regex[i-1].isalpha()) and not(regex[i+1].isalpha()))
+                    or (i == end and not(regex[i-1].isalpha()) and regex[i] == ')')):
+                    close_par += 1
+                if close_par == open_par and close_par != 0:
+                    eq_ind = i
+                    break
+            print(eq_ind, end ,'+++++++++++++++++++++')
+            if eq_ind == end -1:
+                if regex[1].isalpha():
+                    regex = regex[0:-1]
+                else:
+                    regex = regex[1:-2]
+                children = []
+                children.append(self.parse_regex(regex))
+                return RegNode(children, 'Una')
         if regex in self.hom_rule_list:
             return RegNode([],'Hom', RegData(regex))
         begin_index = 0
@@ -190,7 +211,7 @@ class Parser():
                 children.append(self.parse_regex(regex[begin_index:i+2]))
                 begin_index = i + 2
                 continue
-        #print(self.find_hom_rule(regex[begin_index:end+1]))
+        print(regex[begin_index:end+1],'=====================')
         children.append(self.parse_regex(regex[begin_index:end+1]))
         return RegNode(children, 'Concat')
 
@@ -563,6 +584,9 @@ def main():
     #pda = gnf2pda.main()
     gram_in_cnf = cnf.main()
     print(complement)
+    for elem in gram_in_cnf:
+        print(elem.value, elem.rules)
+    print('________________')
     #print(gram_in_cnf)
     #print(p.hom_rule_list)
     perform_intersection_for_simple_automaton(complement, gram_in_cnf)
@@ -571,17 +595,17 @@ def main():
     create_cfg_file(gram_first)
     #print('____PSP____')
     first_gram_in_cnf = cnf.main()
-    #for elem in first_gram_in_cnf:
-        #print(elem.value, elem.rules)
-    #print('________________')
-    f = 0
+    for elem in first_gram_in_cnf:
+        print(elem.value, elem.rules)
+    print('________________')
+    f = 1
     s = 0
     for state in complement.states:
         if state.final:
             f = state.id
-        elif state.id != len(complement.states):
+        elif state.id != len(complement.states) and s == 0:
             s = state.id
-    
+    #print(s, f, '_____________________')
     if check_language_empty(first_gram_in_cnf,s,f):
         examples = sorted(list(set(produce_first_100_left_output(first_gram_in_cnf,0))))
         print('Язык не пуст. Пример слова w =', examples[0])
@@ -590,6 +614,7 @@ def main():
 
     # 2 Task ---------------#
 
+    #print(regex1.get_value())
     create_regex_file(regex1, p,0)
 
     #print(regex1.get_value())
@@ -629,7 +654,8 @@ def main():
     words_after = sorted(words_before, key = len)[:100]
     words_before = sorted(words_after, key = len)[:100]
     res = list(set(words_before) & set(words_after))
-    if len(res) == 100:
+    #print(words_before)
+    if len(res) == len(words_before) and len(res) == len(words_after):
         print("Неточностей не найдено")
     else:
         error_elem = list(set(words_before) - set(words_after))[0]
