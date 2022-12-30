@@ -6,6 +6,14 @@ class NonTerm():
     def get_type(self):
         return 'N'
 
+    def __eq__(self, other):
+        return (isinstance(other, NonTerm) and
+                self.value == other.value)
+    
+    def __hash__(self):
+        return hash(self.value)
+
+
     def get_value(self):
         return f"[{self.value}]"
 
@@ -101,7 +109,7 @@ def anti_refal_changes(gram):
     new_gram.nonterm_elem_dict = {}
     for elem in gram:
         new_gram.nonterm_elem_dict[elem.value] = make_rule_better(elem,new_gram)
-        #print(elem.value.value)
+        print(elem.value.value)
         if elem.value.value == '[S]':
             #print(elem.value)
             new_gram.start_symbol = elem.value
@@ -206,10 +214,10 @@ def get_follow1_for_nont(first1, candidates, candidates_values):
                 if child[0].get_value() not in follow1:
                     follow1[child[0].get_value()] = []
                 if first1[child[1].get_value()] not in follow1[child[0].get_value()]:
-                    follow1[child[0].get_value()].append(first1[child[1].get_value()])
-            if len(child) > 1:
+                    follow1[child[0].get_value()] += first1[child[1].get_value()]
+            #elif len(child) > 1:
                 #print(follow1[child[0].get_value()], follow1[value.value])
-                follow1[child[0].get_value()] += follow1[value.value]
+                #follow1[child[0].get_value()] += follow1[value.value]
 
     for value, rule in candidates.items():
         for child in rule.children:
@@ -219,18 +227,61 @@ def get_follow1_for_nont(first1, candidates, candidates_values):
                     follow1[child[0].get_value()] = []
                 if first1[child[1].get_value()] not in follow1[child[0].get_value()]:
                     follow1[child[0].get_value()].append(first1[child[1].get_value()])
-            if len(child) > 1:
+            #elif len(child) > 1:
                 #print(child[0].get_value(),value.value )
-                follow1[child[0].get_value()] += follow1[value.value]
-                follow1[child[0].get_value()] = list(set(follow1[child[0].get_value()]))
+                #follow1[child[0].get_value()] += follow1[value.value]
+                #follow1[child[0].get_value()] = list(set(follow1[child[0].get_value()]))
     
-    print(follow1)
+    #print(follow1)
 
     for key, value in follow1.items():
         for elem in value:
             pass
             #print(elem[0].get_value(), elem[1].get_value())
 
+def get_follow1_exp(grammar, candidates_values):
+    follow1 = {}
+    changed = True
+    #print(candidates, '------')
+    while changed:
+        changed = False
+        for value, rule in grammar.items():
+            for elem in rule.children:
+                #print(value)
+                #print(elem, '------')
+                if value not in follow1:
+                    follow1[value] = []
+                if len(elem) == 1:
+                    continue
+                if elem[0].get_type() == 'N':
+                    if elem[0] not in follow1[value]:
+                        follow1[value].append(elem[0])
+                        changed = True
+                    if elem[0].get_value() not in follow1:
+                        #print(value.value)
+                        follow1[elem[0]] = []
+                    len_before = len(follow1[value])
+                    #print(value.value, elem[0].get_value(), '+++++')
+                    follow1[value] += follow1[elem[0]]
+                    follow1[value] = list(set(follow1[value]))
+                    len_after = len(follow1[value])
+                    if len_before != len_after:
+                        changed = True
+                if elem[1].get_type() == 'N':
+                    if elem[1] not in  follow1[value]:
+                        follow1[value].append(elem[1])
+                        changed = True
+    print('____follow1____')
+    for value, elem in follow1.items():
+        help = value
+        print(value.value, elem)
+    print('________________')
+    print(follow1)
+    return follow1
+
+def identify_final_candidates(follow1, candidates,candidates_values):
+    suitable_pairs = 11
+    pass
 
 
 def main():
@@ -250,7 +301,20 @@ def main():
 
     candidates_values, candidates = find_candidates(gram)
 
-    first1 = get_first1_for_nont(candidates, candidates_values)
-    follow1 = get_follow1_for_nont(first1, candidates, candidates_values)
- 
+    #get_follow1_exp(candidates, candidates_values)
+
+    #first1 = get_first1_for_nont(candidates, candidates_values)
+    #follow1 = get_follow1_for_nont(first1, candidates, candidates_values)
+
+    follow1 = get_follow1_exp(gram.nonterm_elem_dict, candidates_values)
+    #print(candidates)
+
+    print('____Candidates____')
+    for value, elem in candidates.items():
+        help = value
+        print(value.value, elem.children)
+    print('________________')
+
+    identify_final_candidates(follow1, candidates,candidates_values)
+
 main()

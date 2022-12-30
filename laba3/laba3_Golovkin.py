@@ -627,10 +627,10 @@ def main():
         #state.transitions[complement.alphabet[0]],state.transitions[complement.alphabet[1]] = state.transitions[complement.alphabet[1]],state.transitions[complement.alphabet[0]]
     print(complement)
     # Это один большой костыль, но алгоритм для автомата не мой, и он косячит, почему-то...
-    #print('____PSP____')
-    #for elem in psp_in_cnf:
-       # print(elem.value, elem.rules)
-    #print('________________')
+    print('____PSP____')
+    for elem in psp_in_cnf:
+        print(elem.value, elem.rules)
+    print('________________')
     perform_intersection_for_simple_automaton(complement, psp_in_cnf) 
     cfg1 = apply_homomorhism_to_gram(new_grammar,p)
     #print(cfg1)
